@@ -101,6 +101,11 @@ bool libenv_render(libenv_venv *env, const char *mode, void **frames) {
     return venv->render(std::string(mode), arrays);
 }
 
+void libenv_reset_start_level(libenv_venv *env, int start_level, int env_idx) {
+    auto venv = (VecGame *)(env);
+    venv->reset_start_level(start_level, env_idx);
+}
+
 void libenv_close(libenv_venv *env) {
     auto venv = (VecGame *)(env);
     delete venv;
@@ -316,10 +321,10 @@ VecGame::VecGame(int _nenvs, VecOptions opts) {
 }
 
 void VecGame::reset(const std::vector<std::vector<void *>> &obs) {
-    if (!first_reset) {
-        printf("WARNING: Procgen ignores resets, please create a new environment "
-               "instead\n");
-    }
+    // if (!first_reset) {
+    //     printf("WARNING: Procgen ignores resets, please create a new environment "
+    //            "instead\n");
+    // }
     first_reset = false;
     wait_for_stepping_threads();
     for (int e = 0; e < num_envs; e++) {
@@ -410,4 +415,31 @@ bool VecGame::render(const std::string &mode,
         bgr32_to_rgb888(arrays[e], render_hires_buf, RENDER_RES, RENDER_RES);
     }
     return true;
+}
+
+
+void VecGame::reset_start_level(int level_seed, int env_index) {
+    start_level = level_seed;
+
+    int level_seed_low = level_seed;
+    int level_seed_high = level_seed + 1;
+
+    if (env_index >= 0 && env_index < num_envs) {
+        const auto &game = games[env_index];
+        game->level_seed_high = level_seed_high;
+        game->level_seed_low = level_seed_low;
+        game->is_waiting_for_step = false;
+        game->game_init();
+        game->reset();
+    }
+    else {
+        for (int n = 0; n < num_envs; n++) {
+            const auto &game = games[n];
+            game->level_seed_high = level_seed_high;
+            game->level_seed_low = level_seed_low;
+            game->is_waiting_for_step = false;
+            game->game_init();
+            game->reset();
+        }
+    }
 }

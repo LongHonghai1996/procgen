@@ -37,6 +37,7 @@ class VecGame {
     void step_async(const std::vector<int32_t> &acts, const std::vector<std::vector<void *>> &obs, const std::vector<std::vector<void *>> &infos, float *rews, uint8_t *dones);
     void step_wait();
     bool render(const std::string &mode, const std::vector<void *> &arrays);
+	void reset_start_level(int level_seed, int env_idx);
 
   private:
     // this mutex synchronizes access to pending_games and game->is_waiting_for_step
